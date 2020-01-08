@@ -7,6 +7,7 @@ public class playerMovement : MonoBehaviour
 {
 
     public CharacterController2D controller;
+    public AxeWeapon axeController;
     public Animator animator;
 
     public float runSpeed = 40f;
@@ -32,6 +33,12 @@ public class playerMovement : MonoBehaviour
     bool downattack = false;
     bool meleeAttack = false;
 
+    //Player Throw Animation
+    bool throwAttack = false;
+
+    //If the player has the axe in hand
+    bool hasAxe = true;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -49,9 +56,22 @@ public class playerMovement : MonoBehaviour
 
         animator.SetFloat("vSpeed", verticalMove);
 
+        //Throw Attack
+        if (Input.GetButtonDown("ThrowAxe") && controller.timeStampThrowAttack <= Time.time) {
+            throwAttack = true;
+            animator.SetBool("Throw", true);
+            hasAxe      = false;
+        }
+
         // Uppercut Attack
         if (Input.GetButtonDown("Attack") && controller.timeStampAttack <= Time.time)
         {
+            //Handle returning the axe if the player doesn't have it
+            if (!hasAxe)
+            {
+                Destroy(GameObject.FindWithTag("Axe"));
+                hasAxe = true;
+            }
             if (Input.GetKey(KeyCode.W)) {
                 uppercut = true;
             }
@@ -70,41 +90,14 @@ public class playerMovement : MonoBehaviour
         {
             animator.SetBool("Dash", true);
             dash = true;
-            //dashTime = startDashTime;
         }
-        /*else {
-            dashTime -= Time.deltaTime;
-        }
-        if (dashTime <= 0)
-        {
-            dash = false;
-        }*/
 
         // Dealing with Jumping
         if ((controller.m_Grounded && Input.GetButtonDown("Jump")) || !controller.m_HasJumped && Input.GetButtonDown("Jump"))
         {
             jump = true;
             animator.SetBool("JumpPressed", true);
-            //jumpTimeCounter = jumpTime;
         }
-
-
-        /*if (Input.GetButton("Jump") && jump == true)
-        {
-            if (jumpTimeCounter > 0)
-            {
-                jumpTimeCounter -= Time.deltaTime;
-            }
-            else
-            {
-                jump = false;
-            }
-        }
-        if (Input.GetButtonUp("Jump"))
-        {
-            jump = false;
-        }
-        */
 
         // Dealing with crouching
         if (Input.GetButtonDown("Crouch"))
@@ -132,7 +125,16 @@ public class playerMovement : MonoBehaviour
     void FixedUpdate()
     {
         //Move out character
-        controller.Move(horizontalMove * Time.fixedDeltaTime, crouch, jump, sprint, dash, uppercut, downattack, meleeAttack);
+        controller.MovePlayer(  horizontalMove * Time.fixedDeltaTime, 
+                                crouch, 
+                                jump, 
+                                sprint, 
+                                dash, 
+                                uppercut, 
+                                downattack,
+                                meleeAttack,
+                                throwAttack);
+        throwAttack = false;
         jump = false;
         uppercut = false;
         downattack = false;
@@ -141,5 +143,6 @@ public class playerMovement : MonoBehaviour
         animator.SetBool("Attack", false);
         animator.SetBool("Dash", false);
         animator.SetBool("JumpPressed", false);
+        animator.SetBool("Throw", false);
     }
 }

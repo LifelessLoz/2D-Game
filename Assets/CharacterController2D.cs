@@ -14,9 +14,10 @@ public class CharacterController2D : MonoBehaviour
     [SerializeField] private float m_DownAttackSpeedEnd = 1.5f;
     [SerializeField] private float m_fallMulti = 2.5f;
     [SerializeField] private float m_DashCooldown = 2.5f;                       // The cooldown between when a player can dash
-    [SerializeField] private float m_AttackCooldown = 1.0f;                     // The cooldown between player attacks
+    [SerializeField] private float m_AttackCooldown = 10.0f;                    // The cooldown between player attacks
     [SerializeField] private float m_UpAttackCooldown = 1.5f;                   // The cooldown between player Up attack
-    [SerializeField] private int m_Attack_Damage = 10;                       // The amount of damage dealt by the player per attack
+    [SerializeField] private float m_ThrowAttackCooldown = 1.5f;                // The cooldown between throw attacks
+    [SerializeField] private int m_Attack_Damage = 10;                          // The amount of damage dealt by the player per attack
     [SerializeField] private bool m_AirControl = false;							// Whether or not a player can steer while jumping;
 	[SerializeField] private LayerMask m_WhatIsGround;							// A mask determining what is ground to the character
 	[SerializeField] private Transform m_GroundCheck;							// A position marking where to check if the player is grounded.
@@ -33,11 +34,19 @@ public class CharacterController2D : MonoBehaviour
 	private Vector3 m_Velocity = Vector3.zero;
     private Vector3 tempPos;
 
+    public Animator animator;
+
+    /* Axe throw settings */
+    public Transform throwPoint;
+    public GameObject axePrefab;
+    public float Axe_Throw_Delay = 0.3f;
+
     /* Variables for cooldowns of Player Character */
     public float timeStampDash;
     public float timeStampAttack;
     public float timeStampUpAttack;
     public float timeStampDownAttack;
+    public float timeStampThrowAttack;
 
     private bool downSmash = false;
 
@@ -93,8 +102,16 @@ public class CharacterController2D : MonoBehaviour
 		}
 	}
 
-
-	public void Move(float move, bool crouch, bool jump, bool sprint, bool dash, bool uppercut, bool downattack, bool meleeAttack)
+    // Function for moving the player character
+	public void MovePlayer( float move, 
+                            bool crouch, 
+                            bool jump, 
+                            bool sprint, 
+                            bool dash, 
+                            bool uppercut, 
+                            bool downattack, 
+                            bool meleeAttack,
+                            bool throwAxe)
 	{
 		// If crouching, check to see if the character can stand up
 		if (!crouch)
@@ -109,10 +126,6 @@ public class CharacterController2D : MonoBehaviour
         // Handling Down Attack
         if (downattack && !m_Grounded)
         {
-            /*tempPos = transform.position;
-            tempPos.y -= m_DownAttackSpeedStart;
-            transform.position = tempPos;
-            m_Rigidbody2D.velocity = Vector2.up * m_DownAttackSpeedEnd;*/
             m_Rigidbody2D.AddForce(new Vector2(0f, -m_DownAttackSpeedEnd));
             timeStampDownAttack = Time.time + 0.1f;
             downSmash = true;
@@ -176,12 +189,9 @@ public class CharacterController2D : MonoBehaviour
             if(meleeAttack && timeStampAttack <= Time.time)
             {
                 timeStampAttack = Time.time + m_AttackCooldown;
-                Collider2D[] attackCollider = Physics2D.OverlapCircleAll(attackPosition.position, attackRange, whatIsEnemies);
                 Debug.Log("Attacked!");
-                for (int i = 0; i < attackCollider.Length; i++)
-                {
-                    attackCollider[i].GetComponent<BoarController>().TakeDamage(m_Attack_Damage);
-                }
+                Invoke("Attack", 0.25f);
+                animator.SetBool("hasAxe", true);
             }
 
             // Handling Uppercut Attack
@@ -193,6 +203,15 @@ public class CharacterController2D : MonoBehaviour
                 transform.position = tempPos;
                 m_Rigidbody2D.velocity = Vector2.up * m_UpperCutSpeedEnd;
                 m_HasAirAttacked = true;
+            }
+
+            //Handling Throw Attack
+            if (throwAxe && timeStampThrowAttack <= Time.time)
+            {
+                timeStampThrowAttack = Time.time + m_ThrowAttackCooldown;
+                Destroy(GameObject.FindGameObjectWithTag("Axe"));
+                Invoke("Shoot", Axe_Throw_Delay);
+                animator.SetBool("hasAxe", false);
             }
 
             // Move the character by finding the target velocity
@@ -231,6 +250,7 @@ public class CharacterController2D : MonoBehaviour
         }
     }
 
+    // Function for getting the current speed of a players vertical velocity
     public float vSpeed()
     {
         return m_Rigidbody2D.velocity.y;
@@ -241,10 +261,7 @@ public class CharacterController2D : MonoBehaviour
 		// Switch the way the player is labelled as facing.
 		m_FacingRight = !m_FacingRight;
 
-		// Multiply the player's x local scale by -1.
-		Vector3 theScale = transform.localScale;
-		theScale.x *= -1;
-		transform.localScale = theScale;
+        transform.Rotate(0f, 180f, 0f);
 	}
 
     /* Display Gizmos for testing */
@@ -254,4 +271,19 @@ public class CharacterController2D : MonoBehaviour
         Gizmos.DrawWireSphere(attackPosition.position, attackRange);
     }
 
+    /* Axe throw */
+    void Shoot()
+    {
+        Instantiate(axePrefab, throwPoint.position, throwPoint.rotation);
+    }
+
+    /* Normal attack */
+    void Attack()
+    {
+        Collider2D[] attackCollider = Physics2D.OverlapCircleAll(attackPosition.position, attackRange, whatIsEnemies);
+        for (int i = 0; i < attackCollider.Length; i++)
+        {
+            attackCollider[i].GetComponent<BoarController>().TakeDamage(m_Attack_Damage);
+        }
+    }
 }
