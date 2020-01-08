@@ -7,7 +7,7 @@ public class Axe : MonoBehaviour
     public float axeThrowSpeed = 20f;
     public Rigidbody2D axeRigidBody;
     public Animator animator;
-    bool hitObject = false;
+    //bool hitObject = false;
 
     // Start is called before the first frame update
     void Start()
@@ -18,7 +18,7 @@ public class Axe : MonoBehaviour
     void OnTriggerEnter2D(Collider2D hitInfo)
     {
         Debug.Log(hitInfo.name);
-        hitObject = true;
+        //hitObject = true;
         animator.SetBool("hitObject", true);
         axeRigidBody.velocity = transform.right * 0;
 

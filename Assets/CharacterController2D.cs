@@ -10,7 +10,7 @@ public class CharacterController2D : MonoBehaviour
     [SerializeField] private float m_DashSpeed = 1.5f;
     [SerializeField] private float m_UpperCutSpeedStart = 1.5f;
     [SerializeField] private float m_UpperCutSpeedEnd = 1.5f;
-    [SerializeField] private float m_DownAttackSpeedStart = 1.5f;
+    //[SerializeField] private float m_DownAttackSpeedStart = 1.5f;
     [SerializeField] private float m_DownAttackSpeedEnd = 1.5f;
     [SerializeField] private float m_fallMulti = 2.5f;
     [SerializeField] private float m_DashCooldown = 2.5f;                       // The cooldown between when a player can dash

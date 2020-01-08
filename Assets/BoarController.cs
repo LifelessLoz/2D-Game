@@ -11,7 +11,7 @@ public class BoarController : MonoBehaviour
     private Rigidbody2D boar_rigidbody2D;
     public Animator animator;
 
-    private Animator animation;
+    private Animator newAnimation;
 
     public float timeStampBoarMovement = 0f;
 
